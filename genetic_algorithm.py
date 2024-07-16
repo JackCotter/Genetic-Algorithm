@@ -4,14 +4,9 @@ from spellchecker import SpellChecker
 
 MISSPELLED_WORDS_THRESHOLD = 10
 
-def number_missp_words(reviewText):
-  spell = SpellChecker()
-  words = reviewText.split()
-  misspelled = spell.unknown(words)
-  return len(misspelled)
 
 def evaluation_function(review_obj, parent):
-  if parent['missp_words_weight'] * number_missp_words(review_obj.get('review')) > MISSPELLED_WORDS_THRESHOLD:
+  if parent['missp_words_weight'] * review_obj.get('num_missp_words') > MISSPELLED_WORDS_THRESHOLD:
     return True
   else:
     return False
@@ -43,7 +38,7 @@ def genetic_algorithm(real_reviews, fake_reviews):
   return accuracies
 
 def main():
-  real_reviews, fake_reviews = read_dataset("fake reviews dataset.csv")
+  real_reviews, fake_reviews = read_dataset("fake reviews dataset.csv", 100)
   accuracies = genetic_algorithm(real_reviews, fake_reviews)
   print(accuracies)
 

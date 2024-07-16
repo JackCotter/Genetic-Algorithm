@@ -1,5 +1,7 @@
 import csv
 
+from spellchecker import SpellChecker
+
 titles = [
   'Home_And_Kitchen',
   'Sports_and_Outdoors',
@@ -19,7 +21,13 @@ def is_new_entry(entry):
       return True
   return False
 
-def read_dataset(dataset_path):
+def number_missp_words(reviewText):
+  spell = SpellChecker()
+  words = reviewText.split()
+  misspelled = spell.unknown(words)
+  return len(misspelled) if misspelled is not None else 0
+
+def read_dataset(dataset_path, reviews_used=None):
   with open(dataset_path, mode='r', newline='') as csvfile:
     reader = csv.reader(csvfile, delimiter=',', quotechar='|')
     real_reviews = []
@@ -35,23 +43,29 @@ def read_dataset(dataset_path):
         continue
       try:
         if is_new_entry(row[0]):
+          final_review_obj = {
+            'rating': buffer.get('rating'),
+            'review': buffer.get('review'),
+            'num_missp_words': number_missp_words(buffer.get('review'))
+          }
           if buffer.get('type') == 'OR':
-            real_reviews.append({
-              'rating': buffer.get('rating'),
-              'review': buffer.get('review')
-            })
+            real_reviews.append(final_review_obj)
           elif buffer.get('type') == 'CG':
-            fake_reviews.append({
-              'rating': buffer.get('rating'),
-              'review': buffer.get('review')
-            })
+            fake_reviews.append(final_review_obj)
+          print(buffer.get('review'))
+          print(buffer.get('num_missp_words'))
+          if reviews_used and len(real_reviews) + len(fake_reviews) > reviews_used:
+            break;
           buffer = {
             'rating': row[1],
             'review': row[3],
             'type': row[2]
           }
         else:
-          buffer['review'] += row[0]
+          additional_text = ''
+          for reviewText in row:
+            additional_text += reviewText
+          buffer['review'] += additional_text
       except:
         rows_read_incorrectly += 1
     if rows_read_incorrectly > 0:
