@@ -27,6 +27,10 @@ def number_missp_words(reviewText):
   misspelled = spell.unknown(words)
   return len(misspelled) if misspelled is not None else 0
 
+def number_words_total(reviewText):
+  words = reviewText.split()
+  return len(words)
+
 def read_dataset(dataset_path, reviews_used=None):
   with open(dataset_path, mode='r', newline='') as csvfile:
     reader = csv.reader(csvfile, delimiter=',', quotechar='|')
@@ -46,7 +50,8 @@ def read_dataset(dataset_path, reviews_used=None):
           final_review_obj = {
             'rating': buffer.get('rating'),
             'review': buffer.get('review'),
-            'num_missp_words': number_missp_words(buffer.get('review'))
+            'num_missp_words': number_missp_words(buffer.get('review')),
+            'num_words': number_words_total(buffer.get('review'))
           }
           if buffer.get('type') == 'OR':
             real_reviews.append(final_review_obj)
