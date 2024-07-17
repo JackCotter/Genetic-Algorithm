@@ -1,15 +1,16 @@
 from data_utils import read_dataset
 from random import random
 
-LENGTH_OF_DATASET = 100
+LENGTH_OF_DATASET = 1000
 SCORE_THRESHOLD = 10
 MUTATION_FACTOR = 0.2
 ROUNDS = 5
-PARENTS_PER_ROUND = 10
-
+PARENTS_PER_ROUND = 100
+KEYWORDS = ['simple', 'appendix', 'nice', 'optics', 'last', 'bought', 'balls', 'cleats', 'update']
 
 def evaluation_function(review_obj, parent):
-  if (parent['missp_words_weight'] * review_obj.get('num_missp_words') + parent['num_words_weight'] * review_obj.get('num_words'))> SCORE_THRESHOLD:
+  if (parent['missp_words_weight'] * review_obj.get('num_missp_words') + parent['num_words_weight'] * review_obj.get('num_words') 
+      + parent['keywords_weight'] * review_obj.get('num_keywords')) > SCORE_THRESHOLD:
     return True
   else:
     return False
@@ -46,14 +47,17 @@ def mate_parents(parent1, parent2):
 
   new_missp_words_weight = (parent1['missp_words_weight'] + parent2['missp_words_weight']) / 2
   new_num_words_weight = (parent1['num_words_weight'] + parent2['num_words_weight']) / 2
+  new_keywords_weight = (parent1['keywords_weight'] + parent2['keywords_weight']) / 2
   new_parents = [{'id':index,
                   'missp_words_weight': new_missp_words_weight + generate_mutation(),
-                  'num_words_weight': new_num_words_weight + generate_mutation()} for index in range(PARENTS_PER_ROUND)]
+                  'num_words_weight': new_num_words_weight + generate_mutation(),
+                  'keywords_weight': new_keywords_weight + generate_mutation()
+                  } for index in range(PARENTS_PER_ROUND)]
   return new_parents
 
 
 def genetic_algorithm(real_reviews, fake_reviews, genetic_rounds):
-  parents = [{'id':index, 'missp_words_weight': random(), 'num_words_weight': random()} for index in range(PARENTS_PER_ROUND)]
+  parents = [{'id':index, 'missp_words_weight': random(), 'num_words_weight': random(), 'keywords_weight': random()} for index in range(PARENTS_PER_ROUND)]
   for _ in range(genetic_rounds):
     accuracies = []
     for parent in parents:
@@ -67,7 +71,7 @@ def genetic_algorithm(real_reviews, fake_reviews, genetic_rounds):
   return accuracies
 
 def main():
-  real_reviews, fake_reviews = read_dataset("fake reviews dataset.csv", LENGTH_OF_DATASET)
+  real_reviews, fake_reviews = read_dataset("fake reviews dataset.csv", LENGTH_OF_DATASET, KEYWORDS)
   accuracies = genetic_algorithm(real_reviews, fake_reviews, ROUNDS)
   print(accuracies)
 
