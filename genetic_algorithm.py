@@ -43,16 +43,18 @@ def mate_parents(parent1, parent2):
   new_missp_words_weight = (parent1['missp_words_weight'] + parent2['missp_words_weight']) / 2
   new_num_words_weight = (parent1['num_words_weight'] + parent2['num_words_weight']) / 2
   new_keywords_weight = (parent1['keywords_weight'] + parent2['keywords_weight']) / 2
+  new_keywords_weight = (parent1['classifier_weight'] + parent2['classifier_weight']) / 2
   new_parents = [{'id':index,
                   'missp_words_weight': new_missp_words_weight + generate_mutation(),
                   'num_words_weight': new_num_words_weight + generate_mutation(),
-                  'keywords_weight': new_keywords_weight + generate_mutation()
+                  'keywords_weight': new_keywords_weight + generate_mutation(),
+                  'classifier_weight': new_keywords_weight + generate_mutation()
                   } for index in range(PARENTS_PER_ROUND)]
   return new_parents
 
 
 def genetic_algorithm(reviews, genetic_rounds):
-  parents = [{'id':index, 'missp_words_weight': random(), 'num_words_weight': random(), 'keywords_weight': random()} for index in range(PARENTS_PER_ROUND)]
+  parents = [{'id':index, 'missp_words_weight': random(), 'num_words_weight': random(), 'keywords_weight': random(), 'classifier_weight': random()} for index in range(PARENTS_PER_ROUND)]
   for _ in range(genetic_rounds):
     accuracies = []
     for parent in parents:
@@ -66,7 +68,7 @@ def genetic_algorithm(reviews, genetic_rounds):
   return accuracies
 
 def main():
-  reviews = read_dataset("fake reviews dataset.csv", LENGTH_OF_DATASET, KEYWORDS)
+  reviews = read_dataset("fake reviews dataset.csv", None, KEYWORDS)
   accuracies = genetic_algorithm(reviews, ROUNDS)
   print(accuracies)
 
