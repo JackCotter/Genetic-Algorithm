@@ -45,8 +45,7 @@ def read_dataset(dataset_path, reviews_used=None, keywords=[]):
   with open(dataset_path, mode='r', newline='') as csvfile:
     keyword_dict = {keyword: True for keyword in keywords} # init keyword dict for faster lookup times.
     reader = csv.reader(csvfile, delimiter=',', quotechar='|')
-    real_reviews = []
-    fake_reviews = []
+    read_reviews = []
     rows_read_incorrectly = 0
     buffer = {
       'rating': -1,
@@ -66,11 +65,14 @@ def read_dataset(dataset_path, reviews_used=None, keywords=[]):
             'num_keywords': number_matching_keywords(buffer.get('review'), keyword_dict)
           }
           if buffer.get('type') == 'OR':
-            real_reviews.append(final_review_obj)
+            final_review_obj["fake"] = False
           elif buffer.get('type') == 'CG':
-            fake_reviews.append(final_review_obj)
-          print(buffer.get('type'))
-          if reviews_used and len(real_reviews) + len(fake_reviews) > reviews_used:
+            final_review_obj["fake"] = True
+          else:
+            final_review_obj = None
+          if final_review_obj:
+            read_reviews.append(final_review_obj)
+          if reviews_used and len(read_reviews) > reviews_used:
             break;
           buffer = {
             'rating': row[1],
@@ -86,5 +88,5 @@ def read_dataset(dataset_path, reviews_used=None, keywords=[]):
         rows_read_incorrectly += 1
     if rows_read_incorrectly > 0:
       print("read " + str(rows_read_incorrectly) + " rows incorrectly")
-    return (real_reviews, fake_reviews)
+    return read_reviews
 

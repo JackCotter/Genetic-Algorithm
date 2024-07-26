@@ -15,17 +15,12 @@ def evaluation_function(review_obj, parent):
   else:
     return False
 
-def evaluate_fitness(parent, real_reviews, fake_reviews):
+def evaluate_fitness(parent, reviews):
   num_reviews = 0
   correct = 0
-  for review in real_reviews:
+  for review in reviews:
     result = evaluation_function(review, parent)
-    if result == False:
-      correct += 1
-    num_reviews += 1
-  for review in fake_reviews:
-    result = evaluation_function(review, parent)
-    if result == True:
+    if result == review["fake"]:
       correct += 1
     num_reviews += 1
   return correct / num_reviews
@@ -56,12 +51,12 @@ def mate_parents(parent1, parent2):
   return new_parents
 
 
-def genetic_algorithm(real_reviews, fake_reviews, genetic_rounds):
+def genetic_algorithm(reviews, genetic_rounds):
   parents = [{'id':index, 'missp_words_weight': random(), 'num_words_weight': random(), 'keywords_weight': random()} for index in range(PARENTS_PER_ROUND)]
   for _ in range(genetic_rounds):
     accuracies = []
     for parent in parents:
-      accuracy = evaluate_fitness(parent, real_reviews, fake_reviews)
+      accuracy = evaluate_fitness(parent, reviews)
       accuracies.append(accuracy)
     
     (parent1, parent2) = get_best_two_parents(parents, accuracies)
@@ -71,8 +66,8 @@ def genetic_algorithm(real_reviews, fake_reviews, genetic_rounds):
   return accuracies
 
 def main():
-  real_reviews, fake_reviews = read_dataset("fake reviews dataset.csv", LENGTH_OF_DATASET, KEYWORDS)
-  accuracies = genetic_algorithm(real_reviews, fake_reviews, ROUNDS)
+  reviews = read_dataset("fake reviews dataset.csv", LENGTH_OF_DATASET, KEYWORDS)
+  accuracies = genetic_algorithm(reviews, ROUNDS)
   print(accuracies)
 
 if __name__=='__main__':
