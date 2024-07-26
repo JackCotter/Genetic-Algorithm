@@ -6,14 +6,14 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 
 LENGTH_OF_DATASET = 1000
-SCORE_THRESHOLD = 4
+SCORE_THRESHOLD = 1
 MUTATION_FACTOR = 0.2
 ROUNDS = 5
 PARENTS_PER_ROUND = 100
 KEYWORDS = ['simple', 'appendix', 'nice', 'optics', 'last', 'bought', 'balls', 'cleats', 'update']
 CLASSIFIER_TRAINING_PERCENTAGE = 0.15
 NUMBER_OF_NEAREST_NEIGHBOURS = 3
-NUMBER_OF_WORDS_THRESHOLD = 100
+NUMBER_OF_WORDS_THRESHOLD = 50
 NUMBER_OF_MISSPELLED_WORDS_THRESHOLD = 3
 NUMBER_OF_KEYWORDS_THRESHOLD = 2
 
@@ -33,10 +33,16 @@ def evaluation_function(review_obj, parent):
 def evaluate_fitness(parent, reviews):
   num_reviews = 0
   correct = 0
+  fake_counter = 0
+  real_counter = 0
   for review in reviews:
     result = evaluation_function(review, parent)
     if result == review["fake"]:
       correct += 1
+    if result:
+      fake_counter += 1
+    else:
+      real_counter += 1
     num_reviews += 1
   return correct / num_reviews
     
