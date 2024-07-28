@@ -21,32 +21,10 @@ def is_new_entry(entry):
       return True
   return False
 
-def number_missp_words(reviewText):
-  return 0
-  # TODO As of right now, no missp words are found in the dataset, so this always returns 0. Either need to find a new dataset, or use a different metric. return 0 for now to speed up.
-  spell = SpellChecker()
-  words = reviewText.split()
-  misspelled = spell.unknown(words)
-  return len(misspelled) if misspelled is not None else 0
-
-def number_words_total(reviewText):
-  words = reviewText.split()
-  return len(words)
-
-def number_matching_keywords(reviewText, keyword_dict):
-  words = reviewText.split()
-  matching_keywords = 0
-  for word in words:
-    if keyword_dict.get(word) is not None:
-      matching_keywords += 1
-  return matching_keywords
-
-def read_dataset(dataset_path, reviews_used=None, keywords=[]):
+def read_dataset(dataset_path, reviews_used=None):
   with open(dataset_path, mode='r', newline='') as csvfile:
-    keyword_dict = {keyword: True for keyword in keywords} # init keyword dict for faster lookup times.
     reader = csv.reader(csvfile, delimiter=',', quotechar='|')
-    real_reviews = []
-    fake_reviews = []
+    read_reviews = []
     rows_read_incorrectly = 0
     buffer = {
       'rating': -1,
@@ -61,16 +39,16 @@ def read_dataset(dataset_path, reviews_used=None, keywords=[]):
           final_review_obj = {
             'rating': buffer.get('rating'),
             'review': buffer.get('review'),
-            'num_missp_words': number_missp_words(buffer.get('review')),
-            'num_words': number_words_total(buffer.get('review')),
-            'num_keywords': number_matching_keywords(buffer.get('review'), keyword_dict)
           }
           if buffer.get('type') == 'OR':
-            real_reviews.append(final_review_obj)
+            final_review_obj["fake"] = False
           elif buffer.get('type') == 'CG':
-            fake_reviews.append(final_review_obj)
-          print(buffer.get('type'))
-          if reviews_used and len(real_reviews) + len(fake_reviews) > reviews_used:
+            final_review_obj["fake"] = True
+          else:
+            final_review_obj = None
+          if final_review_obj:
+            read_reviews.append(final_review_obj)
+          if reviews_used and len(read_reviews) > reviews_used:
             break;
           buffer = {
             'rating': row[1],
@@ -86,5 +64,5 @@ def read_dataset(dataset_path, reviews_used=None, keywords=[]):
         rows_read_incorrectly += 1
     if rows_read_incorrectly > 0:
       print("read " + str(rows_read_incorrectly) + " rows incorrectly")
-    return (real_reviews, fake_reviews)
+    return read_reviews
 
