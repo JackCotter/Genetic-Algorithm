@@ -8,12 +8,13 @@ from sklearn.naive_bayes import MultinomialNB
 
 LENGTH_OF_DATASET = 1000
 SCORE_THRESHOLD = 1
-MUTATION_FACTOR = 0.2
-ROUNDS = 5
+MUTATION_FACTOR = 0.3
+ROUNDS = 10
 PARENTS_PER_ROUND = 100
+CHILDREN_PER_MATE = 4
 CLASSIFIER_TRAINING_PERCENTAGE = 0.15
 TESTING_DATA_PERCENTAGE = 0.15
-NUMBER_OF_NEAREST_NEIGHBOURS = 3
+NUMBER_OF_NEAREST_NEIGHBOURS = 7
 
 def evaluation_function(review_obj, parent):
   score_logreg = (1 if review_obj.get('logreg') else 0) * parent['logreg_weight']
@@ -42,31 +43,39 @@ def evaluate_fitness(parent, reviews):
     num_reviews += 1
   return correct / num_reviews
     
-def get_best_two_parents(parents, accuracies):
-  index_best_1 = 0
-  index_best_2 = 0
-  max_accuracy = 0
+def get_best_x_parents(parents, accuracies):
+  accuracies_to_parent = {}
   for cur_index, accuracy in enumerate(accuracies):
-    if accuracy > max_accuracy:
-      index_best_2 = index_best_1
-      index_best_1 = cur_index
-  return (parents[index_best_1], parents[index_best_2])
+    accuracies_to_parent[accuracy] = parents[cur_index]
+  sorted_accuracies = accuracies
+  sorted_accuracies.sort(reverse=True)
+  best_parents = []
+  for index in range(int(len(parents) / 2)):
+    best_parents.append(accuracies_to_parent[sorted_accuracies[index]])
+  return best_parents
 
-def mate_parents(parent1, parent2):
+def mate_parents(parents):
   def generate_mutation():
     # Returns MUTATION_FACTOR * (float in range -0.5, 0.5)
     return MUTATION_FACTOR * (0.5 - random())
 
-  new_logreg_weight = (parent1['logreg_weight'] + parent2['logreg_weight']) / 2
-  new_knn_weight = (parent1['knn_weight'] + parent2['knn_weight']) / 2
-  new_svc_weight = (parent1['svc_weight'] + parent2['svc_weight']) / 2
-  new_nb_weight = (parent1['nb_weight'] + parent2['nb_weight']) / 2
-  new_parents = [{'id':index,
-                  'logreg_weight': new_logreg_weight + generate_mutation(),
-                  'knn_weight': new_knn_weight + generate_mutation(),
-                  'svc_weight': new_svc_weight + generate_mutation(),
-                  'nb_weight': new_nb_weight + generate_mutation()
-                  } for index in range(PARENTS_PER_ROUND)]
+  index = 0
+  new_parents = []
+  while index+1 < len(parents):
+    new_logreg_weight = (parents[index]['logreg_weight'] + parents[index+1]['logreg_weight']) / 2
+    new_knn_weight = (parents[index]['knn_weight'] + parents[index+1]['knn_weight']) / 2
+    new_svc_weight = (parents[index]['svc_weight'] + parents[index+1]['svc_weight']) / 2
+    new_nb_weight = (parents[index]['nb_weight'] + parents[index]['nb_weight']) / 2
+    temp_parents = [{
+      'id':index,
+      'logreg_weight': new_logreg_weight + generate_mutation(),
+      'knn_weight': new_knn_weight + generate_mutation(),
+      'svc_weight': new_svc_weight + generate_mutation(),
+      'nb_weight': new_nb_weight + generate_mutation()
+    } for index in range(CHILDREN_PER_MATE)]
+    new_parents += temp_parents
+    index += 2
+    
   return new_parents
 
 
@@ -78,9 +87,8 @@ def genetic_algorithm(reviews, testing_reviews, genetic_rounds):
       accuracy = evaluate_fitness(parent, reviews)
       accuracies.append(accuracy)
     
-    (parent1, parent2) = get_best_two_parents(parents, accuracies)
-    
-    parents = mate_parents(parent1, parent2)
+    best_parents = get_best_x_parents(parents, accuracies)
+    parents = mate_parents(best_parents)
 
   max_value = max(accuracies)
   max_index = accuracies.index(max_value)
