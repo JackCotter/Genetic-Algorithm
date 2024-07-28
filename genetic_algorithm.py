@@ -4,6 +4,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
+from sklearn.naive_bayes import MultinomialNB
 
 LENGTH_OF_DATASET = 1000
 SCORE_THRESHOLD = 1
@@ -18,8 +19,9 @@ def evaluation_function(review_obj, parent):
   score_logreg = (1 if review_obj.get('logreg') else 0) * parent['logreg_weight']
   score_knn = (1 if review_obj.get('knn') else 0) * parent['knn_weight']
   score_svc = (1 if review_obj.get('svc') else 0) * parent['svc_weight']
+  score_nb = (1 if review_obj.get('nb') else 0) * parent['nb_weight']
 
-  if (score_logreg + score_knn + score_svc) > SCORE_THRESHOLD:
+  if (score_logreg + score_knn + score_svc + score_nb) > SCORE_THRESHOLD:
     return True
   else:
     return False
@@ -58,16 +60,18 @@ def mate_parents(parent1, parent2):
   new_logreg_weight = (parent1['logreg_weight'] + parent2['logreg_weight']) / 2
   new_knn_weight = (parent1['knn_weight'] + parent2['knn_weight']) / 2
   new_svc_weight = (parent1['svc_weight'] + parent2['svc_weight']) / 2
+  new_nb_weight = (parent1['nb_weight'] + parent2['nb_weight']) / 2
   new_parents = [{'id':index,
                   'logreg_weight': new_logreg_weight + generate_mutation(),
                   'knn_weight': new_knn_weight + generate_mutation(),
                   'svc_weight': new_svc_weight + generate_mutation(),
+                  'nb_weight': new_nb_weight + generate_mutation()
                   } for index in range(PARENTS_PER_ROUND)]
   return new_parents
 
 
 def genetic_algorithm(reviews, testing_reviews, genetic_rounds):
-  parents = [{'id':index, 'logreg_weight': random(), 'knn_weight': random(), 'svc_weight': random()} for index in range(PARENTS_PER_ROUND)]
+  parents = [{'id':index, 'logreg_weight': random(), 'knn_weight': random(), 'svc_weight': random(), 'nb_weight': random()} for index in range(PARENTS_PER_ROUND)]
   for _ in range(genetic_rounds):
     accuracies = []
     for parent in parents:
@@ -82,7 +86,7 @@ def genetic_algorithm(reviews, testing_reviews, genetic_rounds):
   max_index = accuracies.index(max_value)
   parent_value = parents[max_index]
   accuracy = evaluate_fitness(parent_value, testing_reviews)
-  return (accuracy, parent_value['logreg_weight'], parent_value['knn_weight'], parent_value['svc_weight'])
+  return (accuracy, parent_value['logreg_weight'], parent_value['knn_weight'], parent_value['svc_weight'], parent_value['nb_weight'])
 
 def train_classifiers(reviews, vectorizer):
   X_train = []
@@ -102,14 +106,18 @@ def train_classifiers(reviews, vectorizer):
   svm = SVC(kernel='linear')
   svm.fit(X_train, y_train)
 
-  return (logreg, knn, svm)
+  nb = MultinomialNB()
+  nb.fit(X_train, y_train)
 
-def run_classifiers(reviews, vectorizer, logreg, knn, svc):
+  return (logreg, knn, svm, nb)
+
+def run_classifiers(reviews, vectorizer, logreg, knn, svc, nb):
   for review in reviews:
     transformed_review = vectorizer.transform([review['review']])
     review['logreg'] = logreg.predict(transformed_review)
     review['knn'] = knn.predict(transformed_review)
     review['svc'] = svc.predict(transformed_review)
+    review['nb'] = nb.predict(transformed_review)
   return reviews
 
 def main():
@@ -118,15 +126,16 @@ def main():
   genetic_algorithm_training_reviews = reviews[int(len(reviews) * CLASSIFIER_TRAINING_PERCENTAGE)]
   
   vectorizer = CountVectorizer()
-  logreg, knn, svm = train_classifiers(classifier_training_reviews, vectorizer)
-  genetic_algorithm_training_reviews = run_classifiers(classifier_training_reviews, vectorizer, logreg, knn, svm)
+  logreg, knn, svm, nb = train_classifiers(classifier_training_reviews, vectorizer)
+  genetic_algorithm_training_reviews = run_classifiers(classifier_training_reviews, vectorizer, logreg, knn, svm, nb)
   testing_reviews = genetic_algorithm_training_reviews[int(-1 * len(reviews) * TESTING_DATA_PERCENTAGE):]
   genetic_algorithm_training_reviews = genetic_algorithm_training_reviews[:int(1 * len(reviews) * TESTING_DATA_PERCENTAGE)]
-  accuracy, logreg_weight, knn_weight, svc_weight = genetic_algorithm(genetic_algorithm_training_reviews, testing_reviews, ROUNDS)
+  accuracy, logreg_weight, knn_weight, svc_weight, nb_weight = genetic_algorithm(genetic_algorithm_training_reviews, testing_reviews, ROUNDS)
   print(accuracy)
   print(logreg_weight)
   print(knn_weight)
   print(svc_weight)
+  print(nb_weight)
 
 if __name__=='__main__':
   main()

@@ -41,3 +41,6 @@ def predict( review ):
     
     print( prediction )
     return prediction[0]
+
+# KNeighborsClassifier
+# Logistic Rregression
