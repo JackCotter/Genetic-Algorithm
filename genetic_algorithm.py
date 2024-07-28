@@ -84,9 +84,7 @@ def genetic_algorithm(reviews, testing_reviews, genetic_rounds):
       accuracies.append(accuracy)
     
     best_parents = get_best_x_parents(parents, accuracies)
-    print(len(best_parents))
     parents = mate_parents(best_parents)
-    print(len(parents))
 
   max_value = max(accuracies)
   max_index = accuracies.index(max_value)
