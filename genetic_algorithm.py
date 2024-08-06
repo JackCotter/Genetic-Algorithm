@@ -7,7 +7,6 @@ from sklearn.svm import SVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
-from sklearn.model_selection import learning_curve
 
 SCORE_THRESHOLD = 1
 MUTATION_FACTOR = 0.3
@@ -84,7 +83,6 @@ def mate_parents( parents ):
 
 
 def genetic_algorithm( reviews, testing_reviews, genetic_rounds ):
-  learning_curve = []
   parents = [ { 
     'id' : index, 
     'logreg_weight' : random(), 
@@ -99,9 +97,7 @@ def genetic_algorithm( reviews, testing_reviews, genetic_rounds ):
       accuracies.append( accuracy )
     
     best_parents = get_best_x_parents( parents, accuracies )
-    print( len( best_parents ) )
     parents = mate_parents( best_parents )
-    learning_curve.append( max( accuracies ) )
 
   max_value = max( accuracies )
   max_index = accuracies.index( max_value )
@@ -109,8 +105,7 @@ def genetic_algorithm( reviews, testing_reviews, genetic_rounds ):
   accuracy, cm = evaluate_fitness( parent_value, testing_reviews )
   return ( 
     accuracy,
-    cm,
-    learning_curve
+    cm
   )
 
 def train_classifiers( reviews, vectorizer ):
@@ -155,7 +150,7 @@ def main():
   genetic_algorithm_training_reviews = run_classifiers( classifier_training_reviews, vectorizer, logreg, knn, svc, nb )
   testing_reviews = genetic_algorithm_training_reviews[ int( -1 * len( reviews ) * TESTING_DATA_PERCENTAGE ): ]
   genetic_algorithm_training_reviews = genetic_algorithm_training_reviews[ :int( 1 * len( reviews ) * TESTING_DATA_PERCENTAGE ) ]
-  accuracy, cm, learning_curve = genetic_algorithm( genetic_algorithm_training_reviews, testing_reviews, ROUNDS )
+  accuracy, cm = genetic_algorithm( genetic_algorithm_training_reviews, testing_reviews, ROUNDS )
   print( f'In the dataset of { len( reviews ) } reviews' )
   print( f'where { ( 1 - TESTING_DATA_PERCENTAGE - CLASSIFIER_TRAINING_PERCENTAGE ) * 100 }% were used for training' )
   print( f'and { TESTING_DATA_PERCENTAGE * 100 }% were used for testing' )
@@ -163,12 +158,6 @@ def main():
 
   print( 'Confusion Matrix' )
   print( cm )
-
-  print( 'Learning Curve' )
-  counter = 1;
-  while( counter < len( learning_curve ) ):
-    print( learning_curve[ counter ] - learning_curve[ counter - 1 ] )
-    counter += 1;
 
 if __name__=='__main__':
   main()
