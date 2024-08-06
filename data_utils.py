@@ -62,7 +62,5 @@ def read_dataset(dataset_path, reviews_used=None):
           buffer['review'] += additional_text
       except:
         rows_read_incorrectly += 1
-    if rows_read_incorrectly > 0:
-      print("read " + str(rows_read_incorrectly) + " rows incorrectly")
     return read_reviews
 
